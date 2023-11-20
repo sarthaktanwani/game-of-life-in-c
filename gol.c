@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <ctype.h>
 
-#define HEIGHT  30
-#define WIDTH   100
+#define HEIGHT  1000
+#define WIDTH   1000   
 
 int canvas[HEIGHT][WIDTH];
 int canvas_diff[HEIGHT][WIDTH];
@@ -15,6 +16,8 @@ int canvas_diff[HEIGHT][WIDTH];
 // to print the block character with ascii
 //code 219
 int level[] = {' ', 219};
+int columns;
+int rows;
 
 #define LEVEL_COUNT ((sizeof(level) / sizeof(level[0])) - 1)
 
@@ -30,7 +33,31 @@ int emod(int a, int b);
 
 void disp(void);
 
-int main() {
+int main(int argc, const char*argv[]) {
+    //No arguments received
+    if(argc == 1) {
+        columns = WIDTH;
+        rows = HEIGHT;
+    }
+    else if(argc == 2) {
+        printf("Pls enter two arguments for rows and columns");
+        //Return with exit code 134 indicating program was aborted
+        exit(134);
+    }
+    else {
+        /**
+         * @brief we need to remove 4 from the total number of lines
+         * to properly print on the entire command line window.
+         * 
+         * 1. Printing the entire world matrix print 1 extra line +(-1)
+         * 2. There are 2 lines for the border                    +(-2)
+         * 3. There is 1 line for the cursor on the last line     +(-1)
+         * TOTAL:                                                 =(-4)
+         */
+        rows = atoi(argv[2]) - 4;
+        columns = atoi(argv[1]);
+    }
+
     srand(time(NULL));
     random_fill(); 
     // horizontal_fill();
@@ -54,8 +81,8 @@ int main() {
 void disp(void) {
     printf("\n------------------------------\n");
     char c;
-    for(int ii = 0; ii < HEIGHT; ii++) {
-        for(int jj = 0; jj < WIDTH; jj++) {
+    for(int ii = 0; ii < rows; ii++) {
+        for(int jj = 0; jj < columns; jj++) {
             //c = level[(int)(canvas[ii][jj] * LEVEL_COUNT)];
             c = level[canvas[ii][jj]];
             // c = level[2];
@@ -69,8 +96,8 @@ void disp(void) {
 void disp_diff(void) {
     printf("\n******************************\n");
     char c;
-    for(int ii = 0; ii < HEIGHT; ii++) {
-        for(int jj = 0; jj < WIDTH; jj++) {
+    for(int ii = 0; ii < rows; ii++) {
+        for(int jj = 0; jj < columns; jj++) {
             //c = level[(int)(canvas[ii][jj] * LEVEL_COUNT)];
             c = level[canvas_diff[ii][jj]];
             // c = level[2];
@@ -82,29 +109,29 @@ void disp_diff(void) {
 }
 
 void random_fill(void) {
-    for(int ii = 0; ii < HEIGHT; ii++) {
-        for(int jj = 0; jj < WIDTH; jj++) {
+    for(int ii = 0; ii < rows; ii++) {
+        for(int jj = 0; jj < columns; jj++) {
             canvas[ii][jj] = rand() % 2;
         }
     }
 }
 
 void horizontal_fill(void) {
-    for(int jj = 0; jj < WIDTH; jj++) {
+    for(int jj = 0; jj < columns; jj++) {
         canvas[0][jj] = 1; 
     }
 }
 
 void rectangle_fill(void) {
-    for(int ii = HEIGHT/4; ii <= 3*HEIGHT/4; ii++)
-        for(int jj = WIDTH/4; jj < 3*WIDTH/4; jj++) {
+    for(int ii = rows/4; ii <= 3*rows/4; ii++)
+        for(int jj = columns/4; jj < 3*columns/4; jj++) {
             canvas[ii][jj] = 1; 
         }
 }
 
 void apply_diff(void) {
-    for(int ii = 0; ii < HEIGHT; ii++) {
-        for(int jj = 0; jj < WIDTH; jj++) {
+    for(int ii = 0; ii < rows; ii++) {
+        for(int jj = 0; jj < columns; jj++) {
             canvas[ii][jj] += canvas_diff[ii][jj];
         }
     }
@@ -122,8 +149,8 @@ void apply_diff(void) {
 void fill_diff(void) {
     int count_live_cells = 0;
     // printf("&&&&&&&&&&&&&Neighbors in subgrid start:&&&&&&&&&&&&&\n");
-    for(int ii = 0; ii < HEIGHT; ii++) {
-        for(int jj = 0; jj < WIDTH; jj++) {
+    for(int ii = 0; ii < rows; ii++) {
+        for(int jj = 0; jj < columns; jj++) {
             int current_cell = canvas[ii][jj];
             count_live_cells = count_neighbors_in_subgrid(ii, jj);
             // printf("%d\t", count_live_cells);
@@ -157,8 +184,8 @@ int count_neighbors_in_subgrid(int curr_row, int curr_col) {
     int count = 0;
     for(int ii = (curr_row - 1); ii <= (curr_row + 1); ii++) {
         for(int jj = (curr_col - 1); jj <= (curr_col + 1); jj++) {
-            int r = emod(ii, HEIGHT);
-            int c = emod(jj, WIDTH);
+            int r = emod(ii, rows);
+            int c = emod(jj, columns);
             if(ii == curr_row && jj == curr_col) { 
                 continue;
             }
