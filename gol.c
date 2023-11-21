@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include <ctype.h>
 
 #define HEIGHT  1000
 #define WIDTH   1000   
@@ -16,8 +15,8 @@ int canvas_diff[HEIGHT][WIDTH];
 // to print the block character with ascii
 //code 219
 int level[] = {' ', 219};
-int columns;
-int rows;
+int columns = WIDTH;
+int rows = HEIGHT;
 
 #define LEVEL_COUNT ((sizeof(level) / sizeof(level[0])) - 1)
 
@@ -34,28 +33,44 @@ int emod(int a, int b);
 void disp(void);
 
 int main(int argc, const char*argv[]) {
-    //No arguments received
-    if(argc == 1) {
-        columns = WIDTH;
-        rows = HEIGHT;
-    }
-    else if(argc == 2) {
-        printf("Pls enter two arguments for rows and columns");
-        //Return with exit code 134 indicating program was aborted
-        exit(134);
-    }
-    else {
-        /**
-         * @brief we need to remove 4 from the total number of lines
-         * to properly print on the entire command line window.
-         * 
-         * 1. Printing the entire world matrix print 1 extra line +(-1)
-         * 2. There are 2 lines for the border                    +(-2)
-         * 3. There is 1 line for the cursor on the last line     +(-1)
-         * TOTAL:                                                 =(-4)
-         */
-        rows = atoi(argv[2]) - 4;
-        columns = atoi(argv[1]);
+    extern char* optarg;
+    int option;
+    while((option = getopt(argc, (char * const *)argv, "r:c:d:a:")) != -1) {
+        switch(option) {
+            case 'r':
+                    /**
+                     * @brief we need to remove 4 from the total number of lines
+                     * to properly print on the entire command line window.
+                     * 
+                     * 1. Printing the entire world matrix print 1 extra line +(-1)
+                     * 2. There are 2 lines for the border                    +(-2)
+                     * 3. There is 1 line for the cursor on the last line     +(-1)
+                     * TOTAL:                                                 =(-4)
+                     */
+                    rows = atoi(optarg) - 4;
+                    printf("You entered number of rows\n");
+                    break;
+            case 'c':
+                    columns = atoi(optarg);
+                    printf("You entered number of columns\n");
+                    break;
+            case 'd':
+                    level[0] = (int )*optarg;
+                    for(int i = 0; i <= LEVEL_COUNT; i++) {
+                        printf("level[%d]=%c\t", i, level[i]);
+                    }
+                    printf("\n");
+                    break;    
+            case 'a':
+                    level[1] = (int )*optarg;
+                    for(int i = 0; i <= LEVEL_COUNT; i++) {
+                        printf("level[%d]=%c\t", i, level[i]);
+                    }
+                    printf("\n");
+                    break;
+            default:
+                    printf("Error");    
+        }
     }
 
     srand(time(NULL));
