@@ -39,15 +39,14 @@ int main(int argc, const char*argv[]) {
         switch(option) {
             case 'r':
                     /**
-                     * @brief we need to remove 4 from the total number of lines
+                     * @brief we need to remove 2 from the total number of lines
                      * to properly print on the entire command line window.
                      * 
                      * 1. Printing the entire world matrix print 1 extra line +(-1)
-                     * 2. There are 2 lines for the border                    +(-2)
                      * 3. There is 1 line for the cursor on the last line     +(-1)
-                     * TOTAL:                                                 =(-4)
+                     * TOTAL:                                                 =(-2)
                      */
-                    rows = atoi(optarg) - 4;
+                    rows = atoi(optarg) - 2;
                     printf("You entered number of rows\n");
                     break;
             case 'c':
@@ -79,22 +78,17 @@ int main(int argc, const char*argv[]) {
     // rectangle_fill();
     disp();
     while(1) {
-        // disp();
         fill_diff();
-        // disp_diff();
         apply_diff();
         disp();
-        // fill_diff();
-        // apply_diff();
-        // disp();
-        usleep(5 * 1000 * 15);
+        usleep(2 * 1000 * 15);
     }
     
     return 0;
 }
 
 void disp(void) {
-    printf("\n------------------------------\n");
+    printf("\n");
     char c;
     for(int ii = 0; ii < rows; ii++) {
         for(int jj = 0; jj < columns; jj++) {
@@ -105,7 +99,6 @@ void disp(void) {
         }
         printf("\n");
     }
-    printf("\n------------------------------\n");
 }
 
 void disp_diff(void) {
