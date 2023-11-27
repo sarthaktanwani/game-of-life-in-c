@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <getopt.h>
 
 #define HEIGHT  1000
 #define WIDTH   1000   
@@ -15,15 +16,17 @@ int canvas_diff[HEIGHT][WIDTH];
 // to print the block character with ascii
 //code 219
 int level[] = {' ', 219};
+int current_state[] = {' ', '.', '-', '+', 'c', 'o', 'a', 'A', '@', '#'};
 int columns = WIDTH;
 int rows = HEIGHT;
 
 #define LEVEL_COUNT (int)((sizeof(level) / sizeof(level[0])) - 1)
+#define STATE_COUNT (int)((sizeof(current_state) / sizeof(current_state[0])) - 1)
 
 void random_fill(void);
 void fill_diff(void);
 void apply_diff(void);
-void disp_diff(void);
+void transition(char state);
 void (*startWorld)(void);
 void horizontal_fill(void);
 void rectangle_fill(void);
@@ -34,9 +37,28 @@ int emod(int a, int b);
 void disp(void);
 
 int main(int argc, const char*argv[]) {
+
     extern char* optarg;
     int option;
-    while((option = getopt(argc, (char * const *)argv, "r:c:d:a:s:")) != -1) {
+    while(1) {
+        static struct option long_options[] =
+        {
+          {"columns", required_argument, 0, 'r'},
+          {"rows",    required_argument, 0, 'c'},
+          {"dead",  required_argument, 0, 'd'},
+          {"alive",  required_argument, 0, 'a'},
+          {"start-world",    required_argument, 0, 's'},
+          {0, 0, 0, 0}
+        };
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+        
+        option = getopt_long (argc, (char * const *)argv, "r:c:d:a:s:", long_options, &option_index);
+
+        if(option == -1) {
+            break;
+        }
+    
         switch(option) {
             case 'r':
                     /**
@@ -55,34 +77,30 @@ int main(int argc, const char*argv[]) {
                     printf("You entered number of columns\n");
                     break;
             case 'd':
-                    level[0] = (int )*optarg;
+                    level[0] = current_state[0] = (int )*optarg;
                     for(int i = 0; i <= LEVEL_COUNT; i++) {
                         printf("level[%d]=%c\t", i, level[i]);
                     }
                     printf("\n");
                     break;    
             case 'a':
-                    level[1] = (int )*optarg;
+                    level[LEVEL_COUNT] = (int )*optarg;
+                    current_state[STATE_COUNT] = (int )*optarg;
                     for(int i = 0; i <= LEVEL_COUNT; i++) {
                         printf("level[%d]=%c\t", i, level[i]);
                     }
                     printf("\n");
                     break;
             case 's':
-                    switch(atoi(optarg)) {
-                        case 0:
-                            startWorld = &random_fill;
-                            break;
-                        case 1:
-                            startWorld = &rectangle_fill;
-                            break;
-                        case 2:
-                            startWorld = &horizontal_fill;
-                            break;
-                        default:
-                            startWorld = &random_fill;
-                            break;
+                    if(strcmp(optarg, "rectangle") == 0) {
+                        startWorld = &rectangle_fill;
                     }
+                    else if(strcmp(optarg, "horizontal") == 0) {
+                        startWorld = &horizontal_fill;
+                    } 
+                    else {
+                        startWorld = &random_fill;
+                    } 
                     break;
             default:
                     printf("Error");
@@ -92,11 +110,17 @@ int main(int argc, const char*argv[]) {
     srand(time(NULL));
     (*startWorld)();
     disp();
+    // int i = 0;
     while(1) {
         fill_diff();
         apply_diff();
+        // for(int i = 0; i <= STATE_COUNT; i++) {
+        //     transition(current_state[i]);
+        //     usleep(3 * 1000 * 15);
+        // }
         disp();
         usleep(5 * 1000 * 15);
+            // i = (i + 1) % STATE_COUNT;
     }
     
     return 0;
@@ -108,7 +132,8 @@ void disp(void) {
     for(int ii = 0; ii < rows; ii++) {
         for(int jj = 0; jj < columns; jj++) {
             //c = level[(int)(canvas[ii][jj] * LEVEL_COUNT)];
-            c = level[canvas[ii][jj]];
+            // c = level[canvas[ii][jj]];
+            c = ((canvas[ii][jj] == 0) ? level[0] : level[1]);
             // c = level[2];
             printf("%c", c);
         }
@@ -116,24 +141,21 @@ void disp(void) {
     }
 }
 
-void disp_diff(void) {
-    printf("\n******************************\n");
+void transition(char state) {
+    printf("\n");
     char c;
     for(int ii = 0; ii < rows; ii++) {
         for(int jj = 0; jj < columns; jj++) {
-            //c = level[(int)(canvas[ii][jj] * LEVEL_COUNT)];
-            c = level[canvas_diff[ii][jj]];
-            // c = level[2];
-            printf("%d\t", canvas_diff[ii][jj]);
+            c = ((canvas[ii][jj] == 0) ? current_state[0] : state);
+            printf("%c", c);
         }
         printf("\n");
     }
-    printf("\n******************************\n");
 }
 
 void random_fill(void) {
-    for(int ii = 0; ii < rows; ii++) {
-        for(int jj = 0; jj < columns; jj++) {
+     for(int ii = rows/4; ii <= 3*rows/4; ii++) {
+        for(int jj = columns/4; jj < 3*columns/4; jj++) {
             canvas[ii][jj] = rand() % 2;
         }
     }
@@ -171,13 +193,10 @@ void apply_diff(void) {
 
 void fill_diff(void) {
     int count_live_cells = 0;
-    // printf("&&&&&&&&&&&&&Neighbors in subgrid start:&&&&&&&&&&&&&\n");
     for(int ii = 0; ii < rows; ii++) {
         for(int jj = 0; jj < columns; jj++) {
             int current_cell = canvas[ii][jj];
             count_live_cells = count_neighbors_in_subgrid(ii, jj);
-            // printf("%d\t", count_live_cells);
-            // canvas_diff[ii][jj] = count_live_cells;
             if(current_cell == 0) {
                 if(count_live_cells == 3) {
                     canvas_diff[ii][jj] = 1;
@@ -198,9 +217,7 @@ void fill_diff(void) {
                 canvas_diff[ii][jj] = 0;
             }
         }
-        // printf("\n");
     }
-    // printf("\n&&&&&&&&&&&&&Neighbors in subgrid end:&&&&&&&&&&&&&");
 }
 
 int count_neighbors_in_subgrid(int curr_row, int curr_col) {
