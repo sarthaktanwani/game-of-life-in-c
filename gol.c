@@ -18,12 +18,13 @@ int level[] = {' ', 219};
 int columns = WIDTH;
 int rows = HEIGHT;
 
-#define LEVEL_COUNT ((sizeof(level) / sizeof(level[0])) - 1)
+#define LEVEL_COUNT (int)((sizeof(level) / sizeof(level[0])) - 1)
 
 void random_fill(void);
 void fill_diff(void);
 void apply_diff(void);
 void disp_diff(void);
+void (*startWorld)(void);
 void horizontal_fill(void);
 void rectangle_fill(void);
 int count_neighbors_in_subgrid(int r, int c);
@@ -35,7 +36,7 @@ void disp(void);
 int main(int argc, const char*argv[]) {
     extern char* optarg;
     int option;
-    while((option = getopt(argc, (char * const *)argv, "r:c:d:a:")) != -1) {
+    while((option = getopt(argc, (char * const *)argv, "r:c:d:a:s:")) != -1) {
         switch(option) {
             case 'r':
                     /**
@@ -67,21 +68,35 @@ int main(int argc, const char*argv[]) {
                     }
                     printf("\n");
                     break;
+            case 's':
+                    switch(atoi(optarg)) {
+                        case 0:
+                            startWorld = &random_fill;
+                            break;
+                        case 1:
+                            startWorld = &rectangle_fill;
+                            break;
+                        case 2:
+                            startWorld = &horizontal_fill;
+                            break;
+                        default:
+                            startWorld = &random_fill;
+                            break;
+                    }
+                    break;
             default:
-                    printf("Error");    
+                    printf("Error");
         }
     }
 
     srand(time(NULL));
-    random_fill(); 
-    // horizontal_fill();
-    // rectangle_fill();
+    (*startWorld)();
     disp();
     while(1) {
         fill_diff();
         apply_diff();
         disp();
-        usleep(2 * 1000 * 15);
+        usleep(5 * 1000 * 15);
     }
     
     return 0;
