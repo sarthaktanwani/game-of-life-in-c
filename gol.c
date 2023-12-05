@@ -20,11 +20,13 @@ int level[] = {' ', 219};
 int current_state[] = {' ', '.', '-', '+', 'c', 'o', 'a', 'A', '@', '#'};
 int columns = WIDTH;
 int rows = HEIGHT;
+char *map_path;
 
 #define LEVEL_COUNT (int)((sizeof(level) / sizeof(level[0])) - 1)
 #define STATE_COUNT (int)((sizeof(current_state) / sizeof(current_state[0])) - 1)
 
 void parse_input_arguments(int argc, const char* argv[]);
+void fill_canvas_from_file();
 void random_fill(void);
 void fill_diff(void);
 void apply_diff(void);
@@ -43,7 +45,12 @@ int main(int argc, const char*argv[]) {
     parse_input_arguments(argc, argv);
 
     srand(time(NULL));
-    (*startWorld)();
+    if(startWorld == NULL) {
+        rectangle_fill();
+    }
+    else {
+        (*startWorld)();
+    }
     disp();
     while(1) {
         fill_diff();
@@ -66,6 +73,7 @@ void parse_input_arguments(int argc, const char*argv[]) {
           {"dead",  required_argument, 0, 'd'},
           {"alive",  required_argument, 0, 'a'},
           {"start-world",    required_argument, 0, 's'},
+          {"start-world-from-file",    required_argument, 0, 'f'},
           {0, 0, 0, 0}
         };
         /* getopt_long stores the option index here. */
@@ -120,10 +128,50 @@ void parse_input_arguments(int argc, const char*argv[]) {
                         startWorld = &random_fill;
                     } 
                     break;
+            case 'f':
+                    printf("Need to read world from file %s\n", optarg);
+                    map_path = optarg;
+                    startWorld = &fill_canvas_from_file;
+                    break;
             default:
                     printf("Error");
         }
     }
+}
+
+void fill_canvas_from_file() {
+    printf("About to read world from file %s\n", map_path);
+    FILE *fp = fopen(map_path, "r");
+
+    if (fp == NULL)
+    {
+        printf("Error: could not open file %s", map_path);
+        // return 1;
+    }
+
+    // reading line by line, max 256 bytes
+    const unsigned MAX_LENGTH = 256;
+    char buffer[MAX_LENGTH];
+
+    int num_lines = 0;
+    while (fgets(buffer, MAX_LENGTH, fp)) {
+        printf("%s", buffer);
+        for(int i = 0; i < strlen(buffer); i++) {
+            canvas[num_lines][i] = (buffer[i] == '.') ? 0 : 1;
+        }
+        // strncpy((char *)&canvas[num_lines], buffer, MAX_LENGTH);
+        // printf("%s", (char *)&canvas[num_lines]);
+        num_lines++;
+    }
+
+    columns = strlen(buffer) - 1;
+    rows = num_lines;
+    // printf("rows=%d, cols=%d", rows, columns);
+    // close the file
+    fclose(fp);
+    disp();
+    // printf("Print canvas done");
+    // return 0;
 }
 
 void disp(void) {
