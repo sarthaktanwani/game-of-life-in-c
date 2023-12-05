@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <getopt.h>
+#include <string.h>
 
 #define HEIGHT  1000
 #define WIDTH   1000   
@@ -23,6 +24,7 @@ int rows = HEIGHT;
 #define LEVEL_COUNT (int)((sizeof(level) / sizeof(level[0])) - 1)
 #define STATE_COUNT (int)((sizeof(current_state) / sizeof(current_state[0])) - 1)
 
+void parse_input_arguments(int argc, const char* argv[]);
 void random_fill(void);
 void fill_diff(void);
 void apply_diff(void);
@@ -37,7 +39,23 @@ int emod(int a, int b);
 void disp(void);
 
 int main(int argc, const char*argv[]) {
+    
+    parse_input_arguments(argc, argv);
 
+    srand(time(NULL));
+    (*startWorld)();
+    disp();
+    while(1) {
+        fill_diff();
+        apply_diff();
+        disp();
+        usleep(5 * 1000 * 15);
+    }
+    
+    return 0;
+}
+
+void parse_input_arguments(int argc, const char*argv[]) {
     extern char* optarg;
     int option;
     while(1) {
@@ -106,50 +124,31 @@ int main(int argc, const char*argv[]) {
                     printf("Error");
         }
     }
-
-    srand(time(NULL));
-    (*startWorld)();
-    disp();
-    // int i = 0;
-    while(1) {
-        fill_diff();
-        apply_diff();
-        // for(int i = 0; i <= STATE_COUNT; i++) {
-        //     transition(current_state[i]);
-        //     usleep(3 * 1000 * 15);
-        // }
-        disp();
-        usleep(5 * 1000 * 15);
-            // i = (i + 1) % STATE_COUNT;
-    }
-    
-    return 0;
 }
 
 void disp(void) {
-    printf("\n");
+    fputc('\n', stdout);
     char c;
     for(int ii = 0; ii < rows; ii++) {
         for(int jj = 0; jj < columns; jj++) {
             //c = level[(int)(canvas[ii][jj] * LEVEL_COUNT)];
             // c = level[canvas[ii][jj]];
             c = ((canvas[ii][jj] == 0) ? level[0] : level[1]);
-            // c = level[2];
-            printf("%c", c);
+            fputc(c, stdout);
         }
-        printf("\n");
+        fputc('\n', stdout);
     }
 }
 
 void transition(char state) {
-    printf("\n");
+    fputc('\n', stdout);
     char c;
     for(int ii = 0; ii < rows; ii++) {
         for(int jj = 0; jj < columns; jj++) {
             c = ((canvas[ii][jj] == 0) ? current_state[0] : state);
-            printf("%c", c);
+            fputc(c, stdout);
         }
-        printf("\n");
+        fputc('\n', stdout);
     }
 }
 
@@ -162,8 +161,8 @@ void random_fill(void) {
 }
 
 void horizontal_fill(void) {
-    for(int jj = 0; jj < columns; jj++) {
-        canvas[0][jj] = 1; 
+    for(int jj = columns/4; jj < 3*columns/4; jj++) {
+        canvas[rows/2][jj] = 1; 
     }
 }
 
